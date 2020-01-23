@@ -1,0 +1,224 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Simulation">
+      <UniqueIdentifier>{7acb07b6-997e-4fae-a48b-3816f6917dc4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Words">
+      <UniqueIdentifier>{02ef1edd-640b-4b0a-9183-23a78ab94298}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{c43d558e-034b-4d3d-a732-7dcc94227372}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Simulation\Physics">
+      <UniqueIdentifier>{4b56b052-fff3-4060-bb61-f2abf95046b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Simulation\Render">
+      <UniqueIdentifier>{afa06a7d-727e-4480-90d2-7b8d18587111}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Simulation\VM">
+      <UniqueIdentifier>{40a8dc9f-2b4b-49c7-8fd8-5f2cb784e863}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer">
+      <UniqueIdentifier>{c8830921-73e8-4dc0-81bc-15a32c3750b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\imgui">
+      <UniqueIdentifier>{18c9973b-8ba6-4377-a340-6585fd5fa2af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NATVIS">
+      <UniqueIdentifier>{83e5d145-b51e-4131-a188-3424c77eeddb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{f69f5f97-091b-44c5-aa87-8b1327140ffc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Simulation\VM\Basic">
+      <UniqueIdentifier>{7113ea6a-b46e-4fb2-bac1-e7a33bdcc5e4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="phylogen.hpp" />
+    <ClInclude Include="System.hpp" />
+    <ClInclude Include="ThreadPool.hpp" />
+    <ClInclude Include="SimOptions.hpp" />
+    <ClInclude Include="Words\adjectives.txt.hpp">
+      <Filter>Words</Filter>
+    </ClInclude>
+    <ClInclude Include="Words\nouns.txt.hpp">
+      <Filter>Words</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\Controller.hpp">
+      <Filter>Simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\Cell.hpp">
+      <Filter>Simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\Simulation.hpp">
+      <Filter>Simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\Physics\PhysicsInstance.hpp">
+      <Filter>Simulation\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\Physics\PhysicsController.hpp">
+      <Filter>Simulation\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\Render\RenderController.hpp">
+      <Filter>Simulation\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\Render\RenderInstance.hpp">
+      <Filter>Simulation\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\VM\VMInstance.hpp">
+      <Filter>Simulation\VM</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Renderer.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\imgui\imconfig.h">
+      <Filter>Renderer\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\imgui\imgui_internal.h">
+      <Filter>Renderer\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\imgui\imgui.h">
+      <Filter>Renderer\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\imgui\stb_rect_pack.h">
+      <Filter>Renderer\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\imgui\stb_textedit.h">
+      <Filter>Renderer\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\imgui\stb_truetype.h">
+      <Filter>Renderer\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\build\vs_common\resource.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\VM\VMController.hpp">
+      <Filter>Simulation\VM</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\VM\Basic\VMController_Basic.hpp">
+      <Filter>Simulation\VM\Basic</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\VM\VMControllerAlias.hpp">
+      <Filter>Simulation\VM</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\VM\VMInstructions.hpp">
+      <Filter>Simulation\VM</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\VM\Basic\VMInstructions_Basic.hpp">
+      <Filter>Simulation\VM\Basic</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="phylogen.hpp.cpp" />
+    <ClCompile Include="Entry.cpp" />
+    <ClCompile Include="SimOptions.cpp" />
+    <ClCompile Include="Simulation\Cell.cpp">
+      <Filter>Simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="Simulation\Simulation.cpp">
+      <Filter>Simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="Simulation\Physics\PhysicsController.cpp">
+      <Filter>Simulation\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Simulation\Physics\PhysicsInstance.cpp">
+      <Filter>Simulation\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Simulation\Render\RenderController.cpp">
+      <Filter>Simulation\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Simulation\Render\RenderInstance.cpp">
+      <Filter>Simulation\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Simulation\VM\VMInstance.cpp">
+      <Filter>Simulation\VM</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Renderer.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\imgui\imgui.cpp">
+      <Filter>Renderer\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\imgui\imgui_D3D11.cpp">
+      <Filter>Renderer\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\imgui\imgui_draw.cpp">
+      <Filter>Renderer\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Simulation\VM\Basic\VMController_Basic.cpp">
+      <Filter>Simulation\VM\Basic</Filter>
+    </ClCompile>
+    <ClCompile Include="Simulation\VM\Basic\VMInstructions_Basic.cpp">
+      <Filter>Simulation\VM\Basic</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Assets\circle.p.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\circle.v.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\circle_backdrop.p.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\circle_backdrop.v.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\circle_constcolor.p.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\circle_constcolor.v.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\circle_jitter.p.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\circle_jitter.v.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\circle_multiply.p.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\circle_multiply.v.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\blit.v.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\blit.p.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\imgui.v.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\imgui.p.hlsl">
+      <Filter>Assets</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\..\Libraries\libxtd\build\vs2017\natvis\xtd.natvis">
+      <Filter>NATVIS</Filter>
+    </Natvis>
+    <Natvis Include="..\..\..\Libraries\libxtd\build\vs2017\natvis\xtdgraphics.natvis">
+      <Filter>NATVIS</Filter>
+    </Natvis>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\build\vs_common\resource.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\build\vs_common\icon.ico">
+      <Filter>Resources</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\build\vs_common\manifest.xml">
+      <Filter>Resources</Filter>
+    </Xml>
+  </ItemGroup>
+</Project>
