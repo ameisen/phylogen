@@ -1193,15 +1193,15 @@ uint64 Instance::op_SleepAttacked(Register &resultRegister, Controller *controll
 
 void Instance::tick(Controller *controller, CounterType &counter)
 {
-	Cell *cell = m_Cell;
+	Cell * __restrict cell = m_Cell;
 
-	if (!cell->m_Alive)
+	if (!cell->m_Alive) [[unlikely]]
 	{
 		return;
 	}
 
 	bool sleep = false;
-	if ((m_SleepCount > 0) & (cell->m_uEnergy != 0U))
+	if ((m_SleepCount > 0) & (cell->m_uEnergy != 0U)) [[likely]]
 	{
 		--m_SleepCount;
 		++counter[uint(VM::Operation::Sleep)];
@@ -1240,7 +1240,7 @@ void Instance::tick(Controller *controller, CounterType &counter)
 
 	const float costMultiplier = max(float(m_ByteCode.size()) / float(options::BaselineBytecodeSize), 1.0f);
 
-	if (sleep)
+	if (sleep) [[likely]]
 	{
 		uint64 energyCost = uint64(options::SleepTickEnergyLost * costMultiplier); // This is the base cost presuming a volume of '1.0'. As cells get larger,
 													 // this gets higher - simulates respiration being more expensive with worse surface area to volume ratios.
@@ -1282,7 +1282,7 @@ void Instance::tick(Controller *controller, CounterType &counter)
 
 	// handle table transformation.
 	uint8 *operationArray = (uint8 *)&operation;
-	for (uint i = 0; i < 8; ++i)
+	for (uint i = 0; i < sizeof(operation); ++i)
 	{
 		operationArray[i] = OpTranslationTable[operationArray[i]];
 	}
@@ -1293,10 +1293,10 @@ void Instance::tick(Controller *controller, CounterType &counter)
 	Register &resultRegister = m_Registers[uint(opUnion.ResultRegister) % m_Registers.size()];
 	// Last two bits of the fullOpcode include type information.
 
-	static const uint16 REG1_R_REG2_R = (1 << 14) | (1 << 15);
-	static const uint16 REG1_V_REG2_R = (1 << 15);
-	static const uint16 REG1_R_REG2_V = (1 << 14);
-	static const uint16 REG1_V_REG2_V = 0;
+	static constexpr const uint16 REG1_R_REG2_R = (1 << 14) | (1 << 15);
+	static constexpr const uint16 REG1_V_REG2_R = (1 << 15);
+	static constexpr const uint16 REG1_R_REG2_V = (1 << 14);
+	static constexpr const uint16 REG1_V_REG2_V = 0;
 
 	uint64 Cost = 0;
 
@@ -1306,75 +1306,80 @@ void Instance::tick(Controller *controller, CounterType &counter)
 	uint16 opcodeForTracking = min(uint16(opUnion.OpCode), uint16(VM::Operation::MaximumCount));
 	++counter[opcodeForTracking];
 
-	switch (fullOpcode)
-	{
-	default:
-		CASE_1R2R(VM::Operation::NOP) :
-		CASE_1V2R(VM::Operation::NOP) :
-		CASE_1R2V(VM::Operation::NOP) :
-		CASE_1V2V(VM::Operation::NOP) :
-			// Do nothing!
-			break;
-
-		ONE_PARAM_CASE(VM::Operation::Copy, op_Copy);
-		ONE_PARAM_CASE(VM::Operation::Load, op_Load);
-		ONE_PARAM_CASE(VM::Operation::Store, op_Store);
-		ONE_PARAM_CASE(VM::Operation::Load_Store, op_LoadStore);
-
-		ONE_PARAM_CASE(VM::Operation::Jump, op_Jump);
-		TWO_PARAM_CASE(VM::Operation::Jump_Z, op_JumpZ);
-		TWO_PARAM_CASE(VM::Operation::Jump_NZ, op_JumpNZ);
-		TWO_PARAM_CASE(VM::Operation::Jump_GZ, op_JumpGZ);
-		TWO_PARAM_CASE(VM::Operation::Jump_LZ, op_JumpLZ);
-		TWO_PARAM_CASE(VM::Operation::Jump_GEZ, op_JumpGEZ);
-		TWO_PARAM_CASE(VM::Operation::Jump_LEZ, op_JumpLEZ);
-
-		TWO_PARAM_CASE(VM::Operation::Add_Integer, op_Add);
-		TWO_PARAM_CASE(VM::Operation::Subtract_Integer, op_Subtract);
-		TWO_PARAM_CASE(VM::Operation::Multiply_Integer, op_Multiply);
-		TWO_PARAM_CASE(VM::Operation::Divide_Integer, op_Divide);
-		TWO_PARAM_CASE(VM::Operation::Modulo_Integer, op_Modulo);
-
-		TWO_PARAM_CASE(VM::Operation::Add_Float, op_AddF);
-		TWO_PARAM_CASE(VM::Operation::Subtract_Float, op_SubtractF);
-		TWO_PARAM_CASE(VM::Operation::Multiply_Float, op_MultiplyF);
-		TWO_PARAM_CASE(VM::Operation::Divide_Float, op_DivideF);
-		TWO_PARAM_CASE(VM::Operation::Modulo_Float, op_ModuloF);
-
-		TWO_PARAM_CASE(VM::Operation::LogicalAND, op_LAND);
-		TWO_PARAM_CASE(VM::Operation::LogicalNAND, op_LNAND);
-		TWO_PARAM_CASE(VM::Operation::LogicalOR, op_LOR);
-		TWO_PARAM_CASE(VM::Operation::LogicalNOR, op_LNOR);
-		ONE_PARAM_CASE(VM::Operation::LogicalNEGATE, op_LNEGATE);
-		TWO_PARAM_CASE(VM::Operation::LogicalXOR, op_LXOR);
-
+	switch (fullOpcode) {
 		ONE_PARAM_CASE(VM::Operation::Sleep, op_Sleep);
-		ONE_PARAM_CASE(VM::Operation::Move, op_Move);
-		ONE_PARAM_CASE(VM::Operation::Rotate, op_Rotate);
 
-		CONTROLLER_CASE(VM::Operation::Split, op_Split);
-		CONTROLLER_CASE(VM::Operation::Burn, op_Burn);
-		CONTROLLER_CASE(VM::Operation::Suicide, op_Suicide);
-		CONTROLLER_CASE(VM::Operation::Color_Green, op_ColorGreen);
-		CONTROLLER_CASE(VM::Operation::Color_Red, op_ColorRed);
-		CONTROLLER_CASE(VM::Operation::Color_Blue, op_ColorBlue);
-    ONE_PARAM_CASE(VM::Operation::Grow, op_Grow);
-		CONTROLLER_CASE(VM::Operation::GetEnergy, op_GetEnergy);
-		CONTROLLER_CASE(VM::Operation::GetLight_Green, op_GetLightGreen);
-		CONTROLLER_CASE(VM::Operation::GetLight_Red, op_GetLightRed);
-		CONTROLLER_CASE(VM::Operation::GetWaste, op_GetWaste);
-		CONTROLLER_CASE(VM::Operation::Attack, op_Attack);
-		CONTROLLER_TWO_PARAM_CASE(VM::Operation::Transfer, op_Transfer);
+		default:
+			switch (fullOpcode)
+			{
+			default:
+				CASE_1R2R(VM::Operation::NOP) :
+				CASE_1V2R(VM::Operation::NOP) :
+				CASE_1R2V(VM::Operation::NOP) :
+				CASE_1V2V(VM::Operation::NOP) :
+					// Do nothing!
+					break;
 
-		CONTROLLER_CASE(VM::Operation::WasTouched, op_WasTouched);
-		CONTROLLER_CASE(VM::Operation::WasAttacked, op_WasAttacked);
-		CONTROLLER_CASE(VM::Operation::See, op_See);
-		CONTROLLER_CASE(VM::Operation::Size, op_Size);
-		CONTROLLER_CASE(VM::Operation::MySize, op_MySize);
-		CONTROLLER_CASE(VM::Operation::Armor, op_Armor);
-		CONTROLLER_CASE(VM::Operation::MyArmor, op_MyArmor);
-		CONTROLLER_CASE(VM::Operation::Sleep_Touch, op_SleepTouched);
-		CONTROLLER_CASE(VM::Operation::Sleep_Attack, op_SleepAttacked);
+				ONE_PARAM_CASE(VM::Operation::Copy, op_Copy);
+				ONE_PARAM_CASE(VM::Operation::Load, op_Load);
+				ONE_PARAM_CASE(VM::Operation::Store, op_Store);
+				ONE_PARAM_CASE(VM::Operation::Load_Store, op_LoadStore);
+
+				ONE_PARAM_CASE(VM::Operation::Jump, op_Jump);
+				TWO_PARAM_CASE(VM::Operation::Jump_Z, op_JumpZ);
+				TWO_PARAM_CASE(VM::Operation::Jump_NZ, op_JumpNZ);
+				TWO_PARAM_CASE(VM::Operation::Jump_GZ, op_JumpGZ);
+				TWO_PARAM_CASE(VM::Operation::Jump_LZ, op_JumpLZ);
+				TWO_PARAM_CASE(VM::Operation::Jump_GEZ, op_JumpGEZ);
+				TWO_PARAM_CASE(VM::Operation::Jump_LEZ, op_JumpLEZ);
+
+				TWO_PARAM_CASE(VM::Operation::Add_Integer, op_Add);
+				TWO_PARAM_CASE(VM::Operation::Subtract_Integer, op_Subtract);
+				TWO_PARAM_CASE(VM::Operation::Multiply_Integer, op_Multiply);
+				TWO_PARAM_CASE(VM::Operation::Divide_Integer, op_Divide);
+				TWO_PARAM_CASE(VM::Operation::Modulo_Integer, op_Modulo);
+
+				TWO_PARAM_CASE(VM::Operation::Add_Float, op_AddF);
+				TWO_PARAM_CASE(VM::Operation::Subtract_Float, op_SubtractF);
+				TWO_PARAM_CASE(VM::Operation::Multiply_Float, op_MultiplyF);
+				TWO_PARAM_CASE(VM::Operation::Divide_Float, op_DivideF);
+				TWO_PARAM_CASE(VM::Operation::Modulo_Float, op_ModuloF);
+
+				TWO_PARAM_CASE(VM::Operation::LogicalAND, op_LAND);
+				TWO_PARAM_CASE(VM::Operation::LogicalNAND, op_LNAND);
+				TWO_PARAM_CASE(VM::Operation::LogicalOR, op_LOR);
+				TWO_PARAM_CASE(VM::Operation::LogicalNOR, op_LNOR);
+				ONE_PARAM_CASE(VM::Operation::LogicalNEGATE, op_LNEGATE);
+				TWO_PARAM_CASE(VM::Operation::LogicalXOR, op_LXOR);
+
+				ONE_PARAM_CASE(VM::Operation::Move, op_Move);
+				ONE_PARAM_CASE(VM::Operation::Rotate, op_Rotate);
+
+				CONTROLLER_CASE(VM::Operation::Split, op_Split);
+				CONTROLLER_CASE(VM::Operation::Burn, op_Burn);
+				CONTROLLER_CASE(VM::Operation::Suicide, op_Suicide);
+				CONTROLLER_CASE(VM::Operation::Color_Green, op_ColorGreen);
+				CONTROLLER_CASE(VM::Operation::Color_Red, op_ColorRed);
+				CONTROLLER_CASE(VM::Operation::Color_Blue, op_ColorBlue);
+		    ONE_PARAM_CASE(VM::Operation::Grow, op_Grow);
+				CONTROLLER_CASE(VM::Operation::GetEnergy, op_GetEnergy);
+				CONTROLLER_CASE(VM::Operation::GetLight_Green, op_GetLightGreen);
+				CONTROLLER_CASE(VM::Operation::GetLight_Red, op_GetLightRed);
+				CONTROLLER_CASE(VM::Operation::GetWaste, op_GetWaste);
+				CONTROLLER_CASE(VM::Operation::Attack, op_Attack);
+				CONTROLLER_TWO_PARAM_CASE(VM::Operation::Transfer, op_Transfer);
+
+				CONTROLLER_CASE(VM::Operation::WasTouched, op_WasTouched);
+				CONTROLLER_CASE(VM::Operation::WasAttacked, op_WasAttacked);
+				CONTROLLER_CASE(VM::Operation::See, op_See);
+				CONTROLLER_CASE(VM::Operation::Size, op_Size);
+				CONTROLLER_CASE(VM::Operation::MySize, op_MySize);
+				CONTROLLER_CASE(VM::Operation::Armor, op_Armor);
+				CONTROLLER_CASE(VM::Operation::MyArmor, op_MyArmor);
+				CONTROLLER_CASE(VM::Operation::Sleep_Touch, op_SleepTouched);
+				CONTROLLER_CASE(VM::Operation::Sleep_Attack, op_SleepAttacked);
+			}
+			break;
 	}
 
 	if (Cost != 0)

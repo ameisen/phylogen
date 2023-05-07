@@ -483,14 +483,14 @@ namespace phylo
       // meh, just terminate.
       TerminateProcess(GetCurrentProcess(), 0);
 
-      for (System *system : runningSystems)
+      for (System *sys : runningSystems)
       {
-         system->halt();
+         sys->halt();
       }
 
-      for (System *system : runningSystems)
+      for (System *sys : runningSystems)
       {
-         delete system;
+         delete sys;
       }
 
       DestroyMenu(hMenu);

@@ -153,6 +153,9 @@
     <ClCompile Include="Simulation\VM\Basic\VMInstructions_Basic.cpp">
       <Filter>Simulation\VM\Basic</Filter>
     </ClCompile>
+    <ClCompile Include="Simulation\Controller.cpp">
+      <Filter>Simulation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\circle.p.hlsl">

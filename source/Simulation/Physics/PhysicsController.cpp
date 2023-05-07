@@ -6,7 +6,7 @@ using namespace phylo;
 using namespace phylo::Physics;
 
 // until we have a real wide_array implementation, we need to presize it.
-static constexpr usize WideArraySize = 5000000ull;
+static constexpr const usize WideArraySize = 5'000'000ull;
 
 namespace
 {
@@ -14,7 +14,7 @@ namespace
 	{
 		vector2F out = position;
 
-		if (out.length() > options::WorldRadius - radius)
+		if (out.length() > options::WorldRadius - radius) [[unlikely]]
 		{
 			out = out.normalize(options::WorldRadius - radius);
 		}
@@ -25,12 +25,12 @@ namespace
 
 Controller::Controller(Simulation &simulation) :
 	m_Simulation(simulation),
-	m_ThreadPool("Physics", [this](usize threadID) {pool_update(threadID); }, 0),
-	m_ThreadPool2("Physics 2", [this](usize threadID) {pool_update2(threadID); }, 0)
+	m_ThreadPool("Physics", [this](usize threadID) {pool_update(threadID); }, false),
+	m_ThreadPool2("Physics 2", [this](usize threadID) {pool_update2(threadID); }, false)
 {
 	// Calculate the grid width/height. Shoudl be the same.
-	m_GridElementsEdge = uint32(((double(options::WorldRadius) * 2.0f) / double(options::MedianCellSize)) + 0.5f);
-	m_GridElementSize = float((double(options::WorldRadius) * 2.0f) / double(m_GridElementsEdge));
+	m_GridElementsEdge = uint32(((double(options::WorldRadius) * 2.0) / double(options::MedianCellSize)) + 0.5);
+	m_GridElementSize = float((double(options::WorldRadius) * 2.0) / double(m_GridElementsEdge));
 	m_GridElementSizeHalf = m_GridElementSize * 0.5f;
 	m_InvGridElementSize = 1.0f / m_GridElementSize;
 	m_GridElements.resize((m_GridElementsEdge * m_GridElementsEdge) + 1); // we stick new elements in the last one.
@@ -158,7 +158,7 @@ void Controller::pool_update(usize) __restrict
 			// If the instance is invalid, just skip it.
 			// This happens when an instance is removed from the global list, but no new instance has populated it.
 			// This happens because the instance list is stable - once an element is in, it stays at exactly that address.
-			if (!instance.m_Valid)
+			if (!instance.m_Valid) [[unlikely]]
 			{
 				continue;
 			}

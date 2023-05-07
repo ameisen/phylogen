@@ -2,7 +2,25 @@
 
 namespace phylo
 {
+   namespace Physics {
+      struct Instance;
+   }
+
+   namespace VM {
+      struct Instance;
+   }
+
+   namespace Render {
+      struct Instance;
+   }
+
    class Cell;
+
+   namespace ComponentControllerCommon {
+      void update_cell_instance(Cell *cell, Physics::Instance *newInstance);
+      void update_cell_instance(Cell *cell, VM::Instance *newInstance);
+      void update_cell_instance(Cell *cell, Render::Instance *newInstance);
+   };
    // To use this, your INSTANCE type must have a variable named m_Cell which is of type Cell *.
    template <typename INSTANCE, bool Ordered = false>
    class ComponentController
@@ -72,7 +90,7 @@ namespace phylo
 
                m_Instances[i - 1] = (INSTANCE &&)m_Instances[i];
 
-               thisCell->update_instance(&m_Instances[i - 1]);
+               ComponentControllerCommon::update_cell_instance(thisCell, &m_Instances[i - 1]);
             }
             m_Instances.back().m_Cell = nullptr;
             m_Instances.pop_back();
@@ -90,7 +108,7 @@ namespace phylo
             m_Instances.pop_back();                            // Pop the last element of the instance array.
 
             instance->m_Cell = cell;                        // Update the cell map information for this instance.
-            cell->update_instance(instance);                   // Notify the cell object to update its instance handles.
+            ComponentControllerCommon::update_cell_instance(cell, instance);                   // Notify the cell object to update its instance handles.
 
             xassert(objOffset < m_Instances.size(), "Size / Offset mismatch");
          }

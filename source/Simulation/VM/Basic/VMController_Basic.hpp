@@ -9,7 +9,7 @@ namespace phylo
 	class Simulation;
 	namespace VM::Basic
 	{
-		class ControllerImpl final : public ComponentController<VM::Instance>
+		class ControllerImpl final : public phylo::ComponentController<VM::Instance, false>
 		{
 		protected:
 			friend struct Instance;

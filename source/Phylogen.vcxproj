@@ -68,6 +68,7 @@
     <ClCompile Include="Renderer\Renderer.cpp" />
     <ClCompile Include="SimOptions.cpp" />
     <ClCompile Include="Simulation\Cell.cpp" />
+    <ClCompile Include="Simulation\Controller.cpp" />
     <ClCompile Include="Simulation\Physics\PhysicsController.cpp" />
     <ClCompile Include="Simulation\Physics\PhysicsInstance.cpp" />
     <ClCompile Include="Simulation\Render\RenderController.cpp" />
@@ -265,8 +266,8 @@
     <ResourceCompile Include="..\build\vs_common\resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\..\..\Libraries\libxtd\build\vs2017\natvis\xtd.natvis" />
-    <Natvis Include="..\..\..\Libraries\libxtd\build\vs2017\natvis\xtdgraphics.natvis" />
+    <Natvis Include="..\..\..\Libraries\libxtd\build\vs2022\natvis\xtd.natvis" />
+    <Natvis Include="..\..\..\Libraries\libxtd\build\vs2022\natvis\xtdgraphics.natvis" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\build\vs_common\icon.ico" />
@@ -277,26 +278,26 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DF10BE2C-E901-4439-9101-465E9FAA1A43}</ProjectGuid>
     <RootNamespace>Phylogen</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -376,14 +377,14 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>
-      </SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>phylogen.hpp</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>D:\Libraries\libxtd\source;$(ProjectDir);D:\Libraries\noisepp\noisepp\core;D:\Libraries\noisepp\noisepp\threadpp</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PreprocessorDefinitions>XTD_BUILD_RELEASE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <InlineFunctionExpansion>
+      </InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
@@ -391,7 +392,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <ControlFlowGuard>false</ControlFlowGuard>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <CallingConvention>Cdecl</CallingConvention>
       <StrictAliasing>true</StrictAliasing>
       <CppLanguageStandard>c++1y</CppLanguageStandard>
@@ -405,7 +406,8 @@
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
       <EnableModules>false</EnableModules>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions>/permissive- %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
+      <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
