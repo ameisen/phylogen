@@ -266,8 +266,8 @@
     <ResourceCompile Include="..\build\vs_common\resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\..\..\Libraries\libxtd\build\vs2022\natvis\xtd.natvis" />
-    <Natvis Include="..\..\..\Libraries\libxtd\build\vs2022\natvis\xtdgraphics.natvis" />
+    <Natvis Include="..\..\..\Libraries\libxtd\natvis\xtd.natvis" />
+    <Natvis Include="..\..\..\Libraries\libxtd\natvis\xtdgraphics.natvis" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\build\vs_common\icon.ico" />
