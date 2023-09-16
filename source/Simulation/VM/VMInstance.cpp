@@ -7,10 +7,12 @@ using namespace phylo::VM;
 Instance::Instance()
 {
 	m_ByteCode.resize(1, 0); // Default to 8 bytes of nothingness.
+#if ENABLE_TRANSLATION_TABLE
 	for (uint i = 0; i < 256; ++i)
 	{
 		OpTranslationTable[i] = i;
 	}
+#endif
 }
 
 void Instance::generate_bytecode_hash()
@@ -741,6 +743,7 @@ uint64 Instance::op_Split(Register &resultRegister, Controller *controller)
 		newCell.m_ColorDye = HSV;
 
 		newCell.m_VMInstance->set_bytecode((array<uint64> &&)bytecode);
+#if ENABLE_TRANSLATION_TABLE
 		memcpy(newCell.m_VMInstance->OpTranslationTable, cell->m_VMInstance->OpTranslationTable, sizeof(newCell.m_VMInstance->OpTranslationTable));
 
 		// VM mutations - yes, the VM itself can mutate. Muahaha.
@@ -776,6 +779,7 @@ uint64 Instance::op_Split(Register &resultRegister, Controller *controller)
 
 			newCell.m_VMInstance->OpTranslationTable[mutateDstIndex] = newCell.m_VMInstance->OpTranslationTable[mutateSrcIndex];
 		}
+#endif
 	}};
 
 	resultRegister = traits<uint16>::ones;
@@ -1280,12 +1284,14 @@ void Instance::tick(Controller *controller, CounterType &counter)
 
 	uint64 operation = m_ByteCode[programCounter];
 
+#if ENABLE_TRANSLATION_TABLE
 	// handle table transformation.
 	uint8 *operationArray = (uint8 *)&operation;
 	for (uint i = 0; i < sizeof(operation); ++i)
 	{
 		operationArray[i] = OpTranslationTable[operationArray[i]];
 	}
+#endif
 
 	// This part will only work on Little Endian systems. Need a better solution if we ever migrate to PPC.
 	Operation &opUnion = *(Operation *)&operation;
@@ -1404,7 +1410,9 @@ void Instance::unserialize(Stream &inStream, Cell *cell)
 {
 	inStream.read(m_Registers);
 	inStream.read(m_ProgramCounter);
+#if ENABLE_TRANSLATION_TABLE
 	inStream.read(OpTranslationTable);
+#endif
 	inStream.read(m_SleepState);
 	inStream.read(m_SleepCount);
 	xtd::array<uint64>::size_type bytecodeLen = 0;
@@ -1417,7 +1425,9 @@ void Instance::serialize(Stream &outStream) const
 {
 	outStream.write(m_Registers);
 	outStream.write(m_ProgramCounter);
+#if ENABLE_TRANSLATION_TABLE
 	outStream.write(OpTranslationTable);
+#endif
 	outStream.write(m_SleepState);
 	outStream.write(m_SleepCount);
 	outStream.write(m_ByteCode.size());

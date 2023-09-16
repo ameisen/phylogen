@@ -1,5 +1,7 @@
 #pragma once
 
+// #define ENABLE_TRANSLATION_TABLE 1
+
 #include "VMControllerAlias.hpp"
 #include "VMInstructions.hpp"
 
@@ -206,7 +208,9 @@ namespace phylo
 				return "an invalid opcode";
 			}
 
+#if ENABLE_TRANSLATION_TABLE
 			uint8 OpTranslationTable[256];
+#endif
 
 			enum class SleepState
 			{
