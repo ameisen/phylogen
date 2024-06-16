@@ -5,9 +5,9 @@
 
 namespace phylo
 {
-   class ThreadPool
+   class ThreadPool final
    {
-      static constexpr bool SINGLE_THREADED = false;
+      static constexpr const bool SINGLE_THREADED = false;
 
       function<void(usize)>   m_PoolFunc;
       array<thread>           m_PoolThreads;
@@ -39,17 +39,17 @@ namespace phylo
       }
 
    public:
-      ThreadPool(const string_view &poolName, function<void(usize)> poolFunc, bool singleThreaded = SINGLE_THREADED ? 1 : 0) :
-         m_PoolFunc(poolFunc),
+      ThreadPool(const string_view &poolName, function<void(usize)>&& poolFunc, bool singleThreaded = SINGLE_THREADED ? 1 : 0) :
+         m_PoolFunc(std::move(poolFunc)),
          m_PoolEvent(singleThreaded ? 1 : system::get_system_information().logical_core_count, 0),
          m_PoolFinishEvent(singleThreaded ? 1 : system::get_system_information().logical_core_count, 0)
       {
-         uint numThreads = singleThreaded ? 1 : system::get_system_information().logical_core_count;
+         const uint numThreads = singleThreaded ? 1 : system::get_system_information().logical_core_count;
          m_PoolThreads.resize(numThreads);
          usize threadNum = 0;
          for (thread &_thread : m_PoolThreads)
          {
-            _thread = [=]() {ThreadPoolFunc(threadNum, numThreads); };
+            _thread = [=, this] {ThreadPoolFunc(threadNum, numThreads); };
             _thread.set_name(poolName + " thread " + string::from(threadNum));
             _thread.start();
 

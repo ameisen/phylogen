@@ -59,7 +59,7 @@ namespace phylo
             m_Value -= min(m_Value, value);
             return *this;
          }
-         const min_t operator - (uint64 value) const 
+         min_t operator - (uint64 value) const 
          {
             return{ m_Value - min(m_Value, value) };
          }

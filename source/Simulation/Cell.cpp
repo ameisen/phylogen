@@ -205,9 +205,9 @@ void Cell::update()
 	auto &renderData = m_RenderInstance->m_RenderData;
 	const auto physicsDirection = physicsInstance->m_Direction;
 	renderData.Radius = float(physicsInstance->m_Radius);
-	renderData.Transform[0] = vector4D(physicsDirection * vector2F(-1.0f, -1.0f), 0.0f, 0.0f);
-	renderData.Transform[1] = vector4D(vector2F(-physicsDirection.y, physicsDirection.x), 0.0f, 0.0f);
-	renderData.Transform[3] = vector4D(physicsInstance->m_Position, 0.0f, 1.0f);
+	renderData.Transform[0] = vector4F(physicsDirection * vector2F(-1.0f, -1.0f), 0.0f, 0.0f);
+	renderData.Transform[1] = vector4F(vector2F(-physicsDirection.y, physicsDirection.x), 0.0f, 0.0f);
+	renderData.Transform[3] = vector4F(physicsInstance->m_Position, 0.0f, 1.0f);
 	//vector2F velocity = physicsInstance->m_Velocity;
 	//velocity.x = clamp(velocity.x, -1.0f, 1.0f);
 	//velocity.y = clamp(velocity.y, -1.0f, 1.0f);
@@ -276,7 +276,7 @@ void Cell::update()
 		{
 			if (m_Armor == 0.0f)
 			{
-				scoped_lock<mutex> _lock(m_Simulation.m_DestroySerializedLock);
+				scoped_lock _lock(m_Simulation.m_DestroySerializedLock);
 				m_Simulation.m_DestroyTasks += this;
 			}
 			else
@@ -404,7 +404,7 @@ void Cell::update()
 	{
 		if (m_Armor == 0.0f)
 		{
-			scoped_lock<mutex> _lock(m_Simulation.m_DestroySerializedLock);
+			scoped_lock _lock(m_Simulation.m_DestroySerializedLock);
 			m_Simulation.m_DestroyTasks += this;
 		}
 		else
@@ -413,7 +413,7 @@ void Cell::update()
 
 			if (m_Integrity <= 0.0f)
 			{
-				scoped_lock<mutex> _lock(m_Simulation.m_DestroySerializedLock);
+				scoped_lock _lock(m_Simulation.m_DestroySerializedLock);
 				m_Simulation.m_DestroyTasks += this;
 			}
 		}
@@ -441,7 +441,7 @@ void Cell::update()
 	{
 		return x*(1.0f - s) + y*s;
 	};
-	m_RenderInstance->m_RenderData.Armor_NucleusScale.y = float(lerp(0.75, 1.5, xtd::min((float(m_VMInstance->m_ByteCode.size()) / float(options::BaselineBytecodeSize * 5)), 1.0f)));
+	m_RenderInstance->m_RenderData.Armor_NucleusScale.y = float(lerp(0.75f, 1.5f, xtd::min((float(m_VMInstance->m_ByteCode.size()) / float(options::BaselineBytecodeSize * 5)), 1.0f)));
 
 	//baseColor *= float(shade);
 	baseColor.a = float(m_Integrity);
@@ -485,21 +485,26 @@ void Cell::update_lite()
 	m_RenderInstance->m_RenderData.Color2.w = float(xtd::sqrt(health));
 
 	m_RenderInstance->m_RenderData.Armor_NucleusScale.x = float(m_Armor);
-	auto lerp = [](float x, float y, float s) -> float
+	const auto lerp = [](float x, float y, float s) -> float
 	{
 		return x*(1.0f - s) + y*s;
 	};
-	m_RenderInstance->m_RenderData.Armor_NucleusScale.y = float(lerp(0.75, 1.5, xtd::min((float(m_VMInstance->m_ByteCode.size()) / float(options::BaselineBytecodeSize * 5)), 1.0f)));
-
-	baseColor.a = float(m_Integrity);
+	m_RenderInstance->m_RenderData.Armor_NucleusScale.y = float(lerp(0.75f, 1.5f, xtd::min((float(m_VMInstance->m_ByteCode.size()) / float(options::BaselineBytecodeSize * 5)), 1.0f)));
 
 	switch (m_Simulation.get_renderer()->getRenderMode())
 	{
 	case Renderer::RenderMode::HashCode:
-		baseColor = hue_to_rgb(m_ColorHash1); break;
+		baseColor = hue_to_rgb(m_ColorHash1);
+		break;
 	case Renderer::RenderMode::Dye:
-		baseColor = hue_to_rgb(m_ColorDye); break;
+		baseColor = hue_to_rgb(m_ColorDye);
+		break;
+	default: [[likely]] {
+			break;
+		}
 	}
+
+	baseColor.a = float(m_Integrity);
 
 	baseColor += {m_SelectBrightness, m_SelectBrightness, m_SelectBrightness, m_SelectBrightness};
 

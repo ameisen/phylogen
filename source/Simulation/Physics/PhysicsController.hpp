@@ -127,8 +127,8 @@ namespace phylo {
 
 		public:
 			Controller() = delete;
-			Controller(Simulation &simulation);
-			~Controller();
+			explicit Controller(Simulation &simulation);
+			~Controller() override;
 
 			void update() ;
 

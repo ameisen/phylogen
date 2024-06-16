@@ -1,4 +1,4 @@
-static const char * words[] = {
+static constexpr const char * words[] = {
 	"average",
 	"big",
 	"colossal",

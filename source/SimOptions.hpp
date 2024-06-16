@@ -6,12 +6,12 @@ namespace phylo
    {
       static constexpr bool Deterministic = true;
 
-      static constexpr float TimeMultiplier = 1.0;
-      static_assert(TimeMultiplier == 1.0, "Must currently be 1.0");
-      static constexpr float CapacityMultiplier = 150.0;
-      static constexpr float GrowthRate = 0.005;
-      static constexpr float GrowthRateMultiplier = 2.0;
-	  static constexpr float LightPeriodTicks = 50000.0f;
+      static constexpr float TimeMultiplier = 1.0f;
+      static_assert(TimeMultiplier == 1.0f, "Must currently be 1.0");
+      static constexpr float CapacityMultiplier = 150.0f;
+      static constexpr float GrowthRate = 0.005f;
+      static constexpr float GrowthRateMultiplier = 2.0f;
+      static constexpr float LightPeriodTicks = 50000.0f;
       extern float LightMapChangeRate;
 
       static constexpr usize MaxBytecodeSize = 30000;
@@ -47,16 +47,18 @@ namespace phylo
       extern int BaseSplitCost;
       extern int BaseGrowCost;
 
-      static constexpr float MinCellSize = 1.0;
-      static constexpr float MaxCellSize = 2.5;
+      static constexpr float MinCellSize = 1.0f;
+      static constexpr float MaxCellSize = 2.5f;
       static constexpr float MedianCellSize = MaxCellSize;
 
-      static constexpr float StartWorldRadius = 128.0;
+      static constexpr float StartWorldRadius = 128.0f;
       static constexpr float WorldRadius = StartWorldRadius * MedianCellSize;
    }
 
    struct options_delta
    {
+      options_delta() = default;
+
       float LightMapChangeRate = options::LightMapChangeRate;
 
       int BaselineBytecodeSize = options::BaselineBytecodeSize;
@@ -90,15 +92,7 @@ namespace phylo
       int BaseSplitCost = options::BaseSplitCost;
       int BaseGrowCost = options::BaseGrowCost;
 
-      bool operator == (const options_delta &delta) const
-      {
-         return memcmp(this, &delta, sizeof(options_delta)) == 0;
-      }
-
-      bool operator != (const options_delta &delta) const
-      {
-         return memcmp(this, &delta, sizeof(options_delta)) != 0;
-      }
+      auto operator <=> (const options_delta& delta) const = default;
 
       void apply()
       {

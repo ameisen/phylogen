@@ -5,7 +5,7 @@ namespace phylo
    class System
    {
    public:
-      virtual ~System() {}
+      virtual ~System() = default;
 
       virtual void halt() = 0;
    };

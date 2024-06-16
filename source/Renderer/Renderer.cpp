@@ -44,8 +44,10 @@ Renderer::~Renderer()
 
 #include <Pdh.h>
 
-static array<PDH_HQUERY> cpuQueries;
-static array<PDH_HCOUNTER> cpuTotals;
+namespace {
+	static array<PDH_HQUERY> cpuQueries;
+	static array<PDH_HCOUNTER> cpuTotals;
+}
 
 static void InitCPULoad(uint num_cpu)
 {
@@ -614,7 +616,7 @@ void Renderer::render_ui()
 			// Options were changed!
 			originalOptions = optionsDelta;
 			apply = false;
-			scoped_lock<mutex> _lock(m_Simulation->getSimulationLock());
+			scoped_lock _lock(m_Simulation->getSimulationLock());
 			optionsDelta.apply();
 		}
 	}
@@ -670,7 +672,7 @@ void Renderer::render_frame(clock::time_point timeAtRenderStart)
 
 	// See if there is new pending data.
 	{
-		scoped_lock<mutex> _lock(m_FramePendingLock);
+		scoped_lock _lock(m_FramePendingLock);
 
 		if (m_CurrentFrame < m_PendingFrame || m_ForceUpdate)
 		{
@@ -930,12 +932,12 @@ void Renderer::render_frame(clock::time_point timeAtRenderStart)
 
 		// For every batch of instances, we need to update the instance buffer.
 
-		auto getTransformTemp = [](const vector4F &vec) -> matrix4F
-		{
-			matrix4F objTrans = matrix4F::Identity;
-			objTrans[3] = vec;
-			return objTrans;
-		};
+		auto getTransformTemp = [](const vector4F& vec) -> matrix4F
+			{
+				matrix4F objTrans = matrix4F::Identity;
+				objTrans[3] = vec;
+				return objTrans;
+			};
 
 		//static random::source<random::engine::xorshift_plus> RandSource;
 		//static InstanceData tempInstanceData[2] = {
@@ -1011,14 +1013,19 @@ void Renderer::render_frame(clock::time_point timeAtRenderStart)
 		update_const_data();
 		render_circles(m_CurrentInstanceData.size(), m_CurrentInstanceData.data());
 
-		extern void ImGui_ImplDX11_NewFrame();
-		ImGui_ImplDX11_NewFrame();
+		const auto window_valid = [](const math::vector2I& size) {
+			return size.x > 0 && size.y > 0;
+			};
 
+		if (m_pWindow && window_valid(m_pWindow->get_size())) {
+			extern void ImGui_ImplDX11_NewFrame();
+			ImGui_ImplDX11_NewFrame();
 
-		render_ui();
+			render_ui();
 
-		extern void ImGui_ImplDX11_Render();
-		ImGui_ImplDX11_Render();
+			extern void ImGui_ImplDX11_Render();
+			ImGui_ImplDX11_Render();
+		}
 
 		m_pContext->ResolveSubresource(
 			Target.m_pBackbufferTexture, 0,
@@ -1200,7 +1207,7 @@ void Renderer::render_loop()
 
 		// Pre-frame duties.
 		{
-			scoped_lock<mutex> _lock(m_CameraLock);
+			scoped_lock _lock(m_CameraLock);
 			m_CameraOffset = m_DirtyCameraOffset;
 			m_ZoomScalar = m_DirtyZoomScalar;
 		}
@@ -1228,7 +1235,7 @@ void Renderer::render_loop()
 
 		if (m_Simulation)
 		{
-			scoped_lock<mutex> _lock(m_RenderLock);
+			scoped_lock _lock(m_RenderLock);
 			{
 				// Every tick, let's revalidate things.
 				vector2I currentResolution = m_pWindow->get_size();
@@ -1743,9 +1750,9 @@ void Renderer::init_all()
 	m_pWindow->set_callback_hook_native(&imgui_wndproc_hook);
 
 	// Kick off the draw thread.
-	event waitForThreadStart;
 	if (!m_DrawThread.started())
 	{
+		event waitForThreadStart;
 		m_DrawThread = [this, &waitForThreadStart] {
 			waitForThreadStart.set();
 
@@ -1777,32 +1784,32 @@ void Renderer::move_screen(const vector2D &mouseMove)
 	mouseMoveAdj *= 2.0;
 	mouseMoveAdj *= m_ZoomScalar;
 
-	scoped_lock<mutex> _lock(m_CameraLock);
+	const double world_radius = static_cast<double>(options::WorldRadius);
+
+	scoped_lock _lock(m_CameraLock);
 	m_DirtyCameraOffset += mouseMoveAdj;
 
 	// clamp camera position
-	m_DirtyCameraOffset.x = clamp(m_DirtyCameraOffset.x, -(double)options::WorldRadius, (double)options::WorldRadius);
-	m_DirtyCameraOffset.y = clamp(m_DirtyCameraOffset.y, -(double)options::WorldRadius, (double)options::WorldRadius);
+	m_DirtyCameraOffset.x = clamp(m_DirtyCameraOffset.x, -world_radius, world_radius);
+	m_DirtyCameraOffset.y = clamp(m_DirtyCameraOffset.y, -world_radius, world_radius);
 }
 
 void Renderer::set_screen_position(const vector2D &position)
 {
-	scoped_lock<mutex> _lock(m_CameraLock);
+	const double world_radius = static_cast<double>(options::WorldRadius);
+
+	scoped_lock _lock(m_CameraLock);
 	m_DirtyCameraOffset = position;
-	m_DirtyCameraOffset.x = clamp(m_DirtyCameraOffset.x, -(double)options::WorldRadius, (double)options::WorldRadius);
-	m_DirtyCameraOffset.y = clamp(m_DirtyCameraOffset.y, -(double)options::WorldRadius, (double)options::WorldRadius);
+	m_DirtyCameraOffset.x = clamp(m_DirtyCameraOffset.x, -world_radius, world_radius);
+	m_DirtyCameraOffset.y = clamp(m_DirtyCameraOffset.y, -world_radius, world_radius);
 }
 
 void Renderer::adjust_zoom(int zoomDelta)
 {
-	scoped_lock<mutex> _lock(m_CameraLock);
+	scoped_lock _lock(m_CameraLock);
 	m_Zoom += zoomDelta;
 	// m_ZoomScalar
-	if (m_Zoom > 0)
-	{
-		m_DirtyZoomScalar = pow(2.0, double(m_Zoom) * 0.1);
-	}
-	else if (m_Zoom < 0)
+	if (m_Zoom != 0)
 	{
 		m_DirtyZoomScalar = pow(2.0, double(m_Zoom) * 0.1);
 	}
@@ -1816,14 +1823,14 @@ vector2D Renderer::unproject(const vector2D &screenPos)
 {
 	vector4D screenPosAdj = { (screenPos.x * 2.0) - 1.0, -((screenPos.y * 2.0) - 1.0), 0.0, 1.0 };
 
-	scoped_lock<mutex> _lock(m_CameraLock);
+	scoped_lock _lock(m_CameraLock);
 
 	return vector2F(m_ViewProjection.inverse().transpose() * screenPosAdj);
 }
 
 void Renderer::update_from_sim(float light, uint64 frame, const wide_array<InstanceData> &instanceData, const array<uint8> &lightData, uint lightEdge, const array<uint32> &wasteData, uint wasteEdge, Renderer::UIData &uiData, const array<atomic<uint32>, VM::NumOperations + 1> &VMInstructionTrackerArray)
 {
-	scoped_lock<mutex> _lock(m_FramePendingLock);
+	scoped_lock _lock(m_FramePendingLock);
 	m_PendingFrame = frame;
 
 	m_PendingArray.resize(instanceData.size());
@@ -1854,13 +1861,13 @@ void Renderer::update_from_sim(float light, uint64 frame, const wide_array<Insta
 
 void Renderer::update_hash_name(const string_view &hash_name)
 {
-	scoped_lock<mutex> _lock(m_FramePendingLock);
+	scoped_lock _lock(m_FramePendingLock);
 	m_HashName = hash_name;
 }
 
 void Renderer::update_from_sim(const Renderer::UIData &uiData)
 {
-	scoped_lock<mutex> _lock(m_FramePendingLock);
+	scoped_lock _lock(m_FramePendingLock);
 	m_UIData = uiData;
 }
 

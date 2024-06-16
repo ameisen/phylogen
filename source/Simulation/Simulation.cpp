@@ -47,10 +47,10 @@ void Simulation::GridProperties::init()
 		uint _x = i % m_GridElementsEdge;
 		uint _y = i / m_GridElementsEdge;
 
-		float x = (((float(_x) / float(m_GridElementsEdge)) * 2.0f - 1.0f) * WorldRadius) + m_GridElementSizeHalf;
-		float y = (((float(_y) / float(m_GridElementsEdge)) * 2.0f - 1.0f) * WorldRadius) + m_GridElementSizeHalf;
+		vector2F offset = { float(_x), float(_y) };
+		offset = (((offset / float(m_GridElementsEdge)) * 2.0f - vector2F{ 1.0f }) * WorldRadius) + vector2F{ m_GridElementSizeHalf };
 
-		m_GridElementsPositions[i] = { x, y };
+		m_GridElementsPositions[i] = offset;
 	}
 }
 
@@ -69,14 +69,17 @@ void Simulation::freeCellPtr(Cell *cell)
 	m_NextFreeCell = (uint8 * )cell;
 }
 
-Simulation::Simulation(event &startProcessing, event &waitThreadProcessing, const loadInitializer &init) : System(),
-m_PhysicsController(*this), m_VMController(*this), m_RenderController(*this),
-m_ThreadPool("Simulation", [this](usize) {pool_update(); }, 0),
-m_ThreadPool2("Simulation2", [this](usize) {pool_update2(); }, 0),
-m_ThreadPool3("Simulation3", [this](usize) {pool_updatelite(); }, 0),
-m_ThreadPool4("Simulation4", [this](usize) {pool_update_waste(); }, 0),
-m_HashName(init.m_HashName),
-m_HashSeed(xtd::security::hash::fnv<uint64>(init.m_HashName))
+Simulation::Simulation(event &startProcessing, event &waitThreadProcessing, const loadInitializer &init) :
+	System(),
+	m_ThreadPool("Simulation", [this](usize) {pool_update(); }, false),
+	m_ThreadPool2("Simulation2", [this](usize) {pool_update2(); }, false),
+	m_ThreadPool3("Simulation3", [this](usize) {pool_updatelite(); }, false),
+	m_ThreadPool4("Simulation4", [this](usize) {pool_update_waste(); }, false),
+	m_PhysicsController(*this),
+	m_VMController(*this),
+	m_RenderController(*this),
+	m_HashName(init.m_HashName),
+	m_HashSeed(xtd::security::hash::fnv<uint64>(init.m_HashName))
 {
 	m_CellStore = new uint8[sizeof(Cell) * MaxNumCells];
 	m_NextFreeCell = &m_CellStore[0];
@@ -121,9 +124,10 @@ m_HashSeed(xtd::security::hash::fnv<uint64>(init.m_HashName))
 		{
 			uint8 &intensity = m_LightGrid.m_GridElements[i];
 			vector2F position = m_LightGrid.m_GridElementsPositions[i];
+			position *= MulFactor;
 
-			float value = clamp(float(m_NoiseSrc->getValue(position.x * MulFactor, position.y * MulFactor, m_LightmapZ, m_pNoiseCache) + 1.0f) * 0.5f, 0.0f, 1.0f);
-			value = sqrtf(value);
+			float value = clamp(float(m_NoiseSrc->getValue(position.x, position.y, m_LightmapZ, m_pNoiseCache) + 1.0f) * 0.5f, 0.0f, 1.0f);
+			value = std::sqrtf(value);
 			//value = value * value;
 
 			intensity = uint8(value * 255.5);
@@ -149,9 +153,9 @@ m_HashSeed(xtd::security::hash::fnv<uint64>(init.m_HashName))
 	m_Cells.reserve(WideArraySize);
 
 	// Kick off the sim thread.
-	event waitForThreadStart;
 	if (!m_SimThread.started())
 	{
+		event waitForThreadStart;
 		m_SimThread = [this, &startProcessing, &waitThreadProcessing, &waitForThreadStart] {
 			waitForThreadStart.set();
 			if (&startProcessing != nullptr)
@@ -184,7 +188,7 @@ Simulation::Simulation(const string &hashName, event &startProcessing, event &wa
 	   (uint32(((float(WorldRadius) * 2.0f) / float(MedianLightCellSize)) + 0.5f)),
 	   -1000000.0f,
 	   0_u32,
-	   (int)xtd::security::hash::fnv<uint32>(hashName)
+	   static_cast<int>(xtd::security::hash::fnv<uint32>(hashName))
 	}
 )
 {
@@ -200,7 +204,7 @@ Simulation::Simulation(const string &hashName) : Simulation(
 	   (uint32(((float(WorldRadius) * 2.0f) / float(MedianLightCellSize)) + 0.5f)),
 	   -1000000.0f,
 	   0,
-	   (int)xtd::security::hash::fnv<uint32>(hashName)
+	   static_cast<int>(xtd::security::hash::fnv<uint32>(hashName))
 	}
 )
 {
@@ -337,8 +341,9 @@ uint32 Simulation::GetInstanceOffset(const vector2F &position) const
 {
 	const float invGridElementSize = m_SimGrid.m_InvGridElementSize;
 
-	uint32 xcoord = uint32((position.x + WorldRadius) * invGridElementSize);
-	uint32 ycoord = uint32((position.y + WorldRadius) * invGridElementSize);
+	vector2F adjustedPosition = (position + WorldRadius) * invGridElementSize;
+	uint32 xcoord = static_cast<uint32>(adjustedPosition.x);
+	uint32 ycoord = static_cast<uint32>(adjustedPosition.y);
 
 	uint32 coord = (ycoord * m_SimGrid.m_GridElementsEdge) + xcoord;
 
@@ -349,8 +354,9 @@ uint32 Simulation::GetLightInstanceOffset(const vector2F &position) const
 {
 	const float invGridElementSize = m_LightGrid.m_InvGridElementSize;
 
-	uint32 xcoord = uint32((position.x + WorldRadius) * invGridElementSize);
-	uint32 ycoord = uint32((position.y + WorldRadius) * invGridElementSize);
+	vector2F adjustedPosition = (position + WorldRadius) * invGridElementSize;
+	uint32 xcoord = static_cast<uint32>(adjustedPosition.x);
+	uint32 ycoord = static_cast<uint32>(adjustedPosition.y);
 
 	uint32 coord = (ycoord * m_LightGrid.m_GridElementsEdge) + xcoord;
 
@@ -361,8 +367,9 @@ uint32 Simulation::GetWasteInstanceOffset(const vector2F &position) const
 {
 	const float invGridElementSize = m_WasteGrid.m_InvGridElementSize;
 
-	uint32 xcoord = uint32((position.x + WorldRadius) * invGridElementSize);
-	uint32 ycoord = uint32((position.y + WorldRadius) * invGridElementSize);
+	vector2F adjustedPosition = (position + WorldRadius) * invGridElementSize;
+	uint32 xcoord = static_cast<uint32>(adjustedPosition.x);
+	uint32 ycoord = static_cast<uint32>(adjustedPosition.y);
 
 	uint32 coord = (ycoord * m_WasteGrid.m_GridElementsEdge) + xcoord;
 
@@ -416,7 +423,7 @@ public:
 	}
 };
 
-void Simulation::spawn_initial_cell() 
+void Simulation::spawn_initial_cell()
 {
 	uint cellIdx = m_Cells.size();
 
@@ -430,9 +437,9 @@ void Simulation::spawn_initial_cell()
 	uint8 bestValue = 0;
 	uint32 bestIndex = -1;
 
-	for (uint32 x = start; x <= end; ++x)
+	for (uint32 y = start; y <= end; ++y)
 	{
-		for (uint32 y = start; y <= end; ++y)
+		for (uint32 x = start; x <= end; ++x)
 		{
 			uint32 index = (y * gridElements) + x;
 
@@ -445,6 +452,7 @@ void Simulation::spawn_initial_cell()
 			}
 		}
 	}
+
 	if (bestIndex == -1)
 	{
 		bestIndex = 0;
@@ -506,7 +514,7 @@ void Simulation::sim_loop()
 		{
 			SpeedState originalSpeedState = m_SpeedState;
 
-			scoped_lock<mutex> _lock(m_CallbackLock);
+			scoped_lock _lock(m_CallbackLock);
 			for (auto &callback : m_Callbacks)
 			{
 				callback(this);
@@ -525,6 +533,8 @@ void Simulation::sim_loop()
 					tickTime = 1_msec; break;
 				case SpeedState::Ludicrous:
 					tickTime = 0_msec; break;
+				default:
+					__assume(0);
 				}
 
 				uiData.speedState = uint(m_SpeedState);
@@ -557,8 +567,8 @@ void Simulation::sim_loop()
 				sinceLastTime -= tickTime;
 			}
 			{
-				scoped_lock<mutex> _lock(m_ClickLock);
-				for (auto &click : m_Clicks)
+				scoped_lock _lock(m_ClickLock);
+				for (const auto &click : m_Clicks)
 				{
 					m_Flashlight = click.State;
 					m_FlashlightPos = click.Position;
@@ -571,7 +581,7 @@ void Simulation::sim_loop()
 			{
 				system::yield();
 			}
-			scoped_lock<mutex> _lock(m_SimulationLock);
+			scoped_lock _lock(m_SimulationLock);
 
 			if (m_Cells.size() == 0)
 			{
@@ -811,7 +821,7 @@ void Simulation::decreaseBlueEnergy(uint offset, uint32 amount)
 
 void Simulation::on_click(const vector2F &pos, bool state) 
 {
-	scoped_lock<mutex> _lock(m_ClickLock);
+	scoped_lock _lock(m_ClickLock);
 	m_Clicks.push_back({ pos, state });
 }
 
@@ -853,7 +863,7 @@ void Simulation::newSim(const string &hashName)
 {
 	{
 		m_SimulationLockAtomic = 1;
-		scoped_lock<mutex> _lock(m_SimulationLock);
+		scoped_lock _lock(m_SimulationLock);
 		m_SimulationLockAtomic = 0;
 		// Check if they want to save first.
 		const int result = MessageBoxW(HWND(m_pRenderer ? m_pRenderer->get_window()->_get_platform_handle() : nullptr), L"Would you like to save first?", L"Save?", MB_YESNOCANCEL);
@@ -875,7 +885,7 @@ void Simulation::newSim(const string &hashName)
 
 	{
 		m_SimulationLockAtomic = 1;
-		scoped_lock<mutex> _lock(m_SimulationLock);
+		scoped_lock _lock(m_SimulationLock);
 		m_SimulationLockAtomic = 0;
 
 		newSimulation = new Simulation(hashName, startNewSimulation, threadKickedOff);
@@ -924,7 +934,7 @@ void Simulation::onLoad()
 
 	{
 		m_SimulationLockAtomic = 1;
-		scoped_lock<mutex> _lock(m_SimulationLock);
+		scoped_lock _lock(m_SimulationLock);
 		m_SimulationLockAtomic = 0;
 		{
 			// Check if they want to save first.
@@ -1104,7 +1114,7 @@ void Simulation::onLoad()
 
 void Simulation::onSave() 
 {
-	scoped_lock<mutex> _lock(SaveLock);
+	scoped_lock _lock(SaveLock);
 
 	++m_Saving;
 	scoped_decrement<decltype(m_Saving)> _saveFalse{ m_Saving };
@@ -1116,7 +1126,7 @@ void Simulation::onSave()
 
 	{
 		m_SimulationLockAtomic = 1;
-		scoped_lock<mutex> _lock(m_SimulationLock);
+		scoped_lock _lock(m_SimulationLock);
 		m_SimulationLockAtomic = 0;
 
 		startSave(saveGatherThread, outStream);
@@ -1180,7 +1190,7 @@ void Simulation::onSave()
 
 void Simulation::Autosave() 
 {
-	scoped_lock<mutex> _lock(SaveLock);
+	scoped_lock _lock(SaveLock);
 
 	++m_Saving;
 	scoped_decrement<decltype(m_Saving)> _saveFalse{ m_Saving };
@@ -1192,7 +1202,7 @@ void Simulation::Autosave()
 
 	{
 		m_SimulationLockAtomic = 1;
-		scoped_lock<mutex> _lock(m_SimulationLock);
+		scoped_lock _lock(m_SimulationLock);
 		m_SimulationLockAtomic = 0;
 
 		startSave(saveGatherThread, outStream);
@@ -1265,7 +1275,7 @@ void Simulation::doSave(Stream &outStream, const string_view &dest)
 		Stream outStream = std::move(outStream);
 		string pathStr = std::move(dest);
 		streamMoved.set();
-		scoped_lock<mutex> _lock(SaveLock);
+		scoped_lock _lock(SaveLock);
 		// If we are here, it's time to actually save the file. Write out 'outstream'.
 		try
 		{

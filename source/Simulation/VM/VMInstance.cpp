@@ -625,12 +625,12 @@ uint64 Instance::op_Split(Register &resultRegister, Controller *controller)
 
 	++cell->m_NumChildren;
 
-	scoped_lock<mutex> _lock(controller->m_SerializedLock);
+	scoped_lock _lock(controller->m_SerializedLock);
 	controller->m_SerializedTasks += {cell->m_CellID, [=]() {
 		// Create new cell
 		Cell *pNewCell = &cell->m_Simulation.getNewCell(cell);
 
-		//scoped_lock<mutex> _lock(controller->m_UnserializedLock); // Contention is impossible.
+		//scoped_lock _lock(controller->m_UnserializedLock); // Contention is impossible.
 		//controller->m_UnserializedTasks += [=]() {
 		   // I'm moving mutation work back to unserialized space, and using the original cells random generator.
 		   // Should be faster.
@@ -731,12 +731,12 @@ uint64 Instance::op_Split(Register &resultRegister, Controller *controller)
 		newCell.m_ColorGreen = cell->m_ColorGreen;
 		newCell.m_ColorRed = cell->m_ColorRed;
 		newCell.m_ColorBlue = cell->m_ColorBlue;
-		newCell.setArmor(0.001);
+		newCell.setArmor(0.001f);
 		// Slightly mutate HSV.
 		auto HSV = cell->m_ColorDye;
-		HSV.x += newCell.getRandom().uniform<float>(-0.05, 0.05);
-		HSV.y += newCell.getRandom().uniform<float>(-0.05, 0.05);
-		HSV.z += newCell.getRandom().uniform<float>(-0.05, 0.05);
+		HSV.x += newCell.getRandom().uniform<float>(-0.05f, 0.05f);
+		HSV.y += newCell.getRandom().uniform<float>(-0.05f, 0.05f);
+		HSV.z += newCell.getRandom().uniform<float>(-0.05f, 0.05f);
 		HSV.x = clamp(HSV.x, 0.0f, 6.0f);
 		HSV.y = clamp(HSV.y, 0.0f, 1.0f);
 		HSV.z = clamp(HSV.z, 0.0f, 1.0f);
@@ -1002,7 +1002,7 @@ uint64 Instance::op_Attack(Register &resultRegister, Controller *controller)
 	{
 		// Now we need to attack!
 		{
-			scoped_lock<mutex> _lock(controller->m_SerializedLock);
+			scoped_lock _lock(controller->m_SerializedLock);
 			controller->m_SerializedTasks += {cell->m_CellID, [=]() {
 				// We attack! Every attack takes down 1/4 armor.
 				if (foundCell->getArmor() > 0.0f)
@@ -1065,7 +1065,7 @@ uint64 Instance::op_Transfer(Register &resultRegister, Controller *controller, i
 		}
 
 		{
-			scoped_lock<mutex> _lock(controller->m_SerializedLock);
+			scoped_lock _lock(controller->m_SerializedLock);
 			controller->m_SerializedTasks += {cell->m_CellID, [=]() {
 				// Where should we insert?
 				const auto &other_bytecode = foundCell->m_VMInstance->m_ByteCode;
@@ -1255,7 +1255,7 @@ void Instance::tick(Controller *controller, CounterType &counter)
 		if (cell->m_uEnergy == 0)
 		{
 			// Kill the cell.
-			scoped_lock<mutex> _lock(controller->m_SerializedLock);
+			scoped_lock _lock(controller->m_SerializedLock);
 			controller->m_KillTasks += cell;
 		}
 
@@ -1271,7 +1271,7 @@ void Instance::tick(Controller *controller, CounterType &counter)
 	if (cell->m_uEnergy == 0u)
 	{
 		// Kill the cell.
-		scoped_lock<mutex> _lock(controller->m_SerializedLock);
+		scoped_lock _lock(controller->m_SerializedLock);
 		controller->m_KillTasks += cell;
 		return;
 	}
@@ -1367,7 +1367,7 @@ void Instance::tick(Controller *controller, CounterType &counter)
 				CONTROLLER_CASE(VM::Operation::Color_Green, op_ColorGreen);
 				CONTROLLER_CASE(VM::Operation::Color_Red, op_ColorRed);
 				CONTROLLER_CASE(VM::Operation::Color_Blue, op_ColorBlue);
-		    ONE_PARAM_CASE(VM::Operation::Grow, op_Grow);
+				ONE_PARAM_CASE(VM::Operation::Grow, op_Grow);
 				CONTROLLER_CASE(VM::Operation::GetEnergy, op_GetEnergy);
 				CONTROLLER_CASE(VM::Operation::GetLight_Green, op_GetLightGreen);
 				CONTROLLER_CASE(VM::Operation::GetLight_Red, op_GetLightRed);
@@ -1400,7 +1400,7 @@ void Instance::tick(Controller *controller, CounterType &counter)
 	if ((cell->m_uEnergy == 0u) | (Cost == uint16(-1)))
 	{
 		// Kill the cell.
-		scoped_lock<mutex> _lock(controller->m_SerializedLock);
+		scoped_lock _lock(controller->m_SerializedLock);
 		controller->m_KillTasks += cell;
 	}
 

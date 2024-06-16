@@ -7,7 +7,7 @@ using namespace phylo::VM;
 using namespace phylo::VM::Basic;
 
 // until we have a real wide_array implementation, we need to presize it.
-static constexpr usize WideArraySize = 5000000ull;
+static constexpr usize WideArraySize = 5'000'000ull;
 
 ControllerImpl::ControllerImpl(Simulation &simulation) : m_Simulation(simulation),
 m_ThreadPool("VM", [this](usize idx) {pool_update(idx); }, 0),
@@ -16,9 +16,7 @@ m_ThreadPool2("VM2", [this](usize idx) {pool_update2(idx); }, 1)
 	memset(m_ExecutionCounter.data(), 0, m_ExecutionCounter.size_raw());
 }
 
-ControllerImpl::~ControllerImpl()
-{
-}
+ControllerImpl::~ControllerImpl() = default;
 
 void ControllerImpl::pool_update(usize threadID)
 {

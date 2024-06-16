@@ -11,20 +11,20 @@ namespace phylo
    {
       class Controller final : public ComponentController<Render::Instance, true>
       {
-		 typedef Render::Instance instance_t;
+         using instance_t = Render::Instance;
 
          Simulation     &m_Simulation;
 
       public:
          Controller() = delete;
-         Controller(Simulation &simulation);
-         ~Controller();
+         explicit Controller(Simulation &simulation);
+         ~Controller() override;
 
          void update()  ;
 
          const wide_array<Renderer::InstanceData> &getRawData() const 
          {
-            return *(const wide_array<Renderer::InstanceData> *)&m_Instances; // This is one of the hackiest things here. But it works. I don't feel like explaining why to myself.
+            return *reinterpret_cast<const wide_array<Renderer::InstanceData>*>(&m_Instances); // This is one of the hackiest things here.
          }
       };
    }

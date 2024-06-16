@@ -166,7 +166,7 @@ namespace phylo
       Simulation(event &startProcessing, event &waitThreadProcessing, const loadInitializer &init);
       Simulation(const string &hashName, event &startProcessing, event &waitThreadProcessing);
       Simulation(const string &hashName);
-      virtual ~Simulation();
+      virtual ~Simulation() override;
 
       uint64 get_hash_seed()  const { return m_HashSeed; }
 
@@ -219,7 +219,7 @@ namespace phylo
 
       void pushCallback(function<void(Simulation * )> func) 
       {
-         scoped_lock<mutex> _lock(m_CallbackLock);
+         scoped_lock _lock(m_CallbackLock);
          m_Callbacks += func;
       }
 

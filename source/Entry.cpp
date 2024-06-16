@@ -47,9 +47,9 @@ namespace phylo
 
    public:
       mouseHandler() = default;
-      virtual ~mouseHandler() {}
+      virtual ~mouseHandler() override = default;
 
-      virtual void on_move(double x, double y, bool lButton, bool rButton)  override final
+      virtual void on_move(double x, double y, bool lButton, bool rButton)  override
       {
          m_CurMousePosition = { x, y };
 
@@ -88,14 +88,14 @@ namespace phylo
          //   xdebug("MOUSE", "Unprojected Position: %s", unproject.to_string());
          //}
       }
-      virtual void on_mousewheel(int wheelDelta)  override final
+      virtual void on_mousewheel(int wheelDelta)  override
       {
          if (g_pRenderer)
          {
             g_pRenderer->adjust_zoom(-wheelDelta);
          }
       }
-      virtual void on_leftbutton(bool state)  override final
+      virtual void on_leftbutton(bool state)  override
       {
          if (m_InDrag && !state)
          {
@@ -108,7 +108,7 @@ namespace phylo
             m_MouseDownPos = m_CurMousePosition;
          }
       }
-      virtual void on_rightbutton(bool state)  override final
+      virtual void on_rightbutton(bool state)  override
       {
          // Let's just presume that this is a click.
          if (!InNewSim && g_pSimulation)
@@ -119,7 +119,7 @@ namespace phylo
       }
    };
 
-   int exec (const array_view<string_view> &arguments) 
+   static int exec (const array_view<string_view> &arguments)
    {
       GetCurrentDirectoryW(MAX_PATH, WorkingDIr);
       ResetWorkingDirectory();
@@ -187,7 +187,7 @@ namespace phylo
             InNewSim = true;
             // Kick off a thread to handle this.
             auto *window = &refWindow;
-            thread newThread = thread{[window]() {
+            thread newThread = thread{[window] {
                try
                {
                   CurrentHashString = getRandomName();
@@ -447,12 +447,12 @@ namespace phylo
          PostMessage(HWND(mainWindow->_get_platform_handle()), WM_SETICON, ICON_SMALL, LPARAM(icon));
       }
 
-	  const string randomName = getRandomName();
+      const string randomName = getRandomName();
 
       auto *simulation = new Simulation(randomName);
       auto *renderer = new Renderer(simulation, mainWindow);
 
-      array<System * > runningSystems = {
+      array<System *> runningSystems = {
          g_pSimulation = simulation,
          g_pRenderer = renderer
       };
@@ -468,8 +468,8 @@ namespace phylo
          system::yield(64_msec);
       }
       
-	  thread destroyThread{ []()
-	  {
+      thread destroyThread{ []
+      {
 		  // Make sure this process gets cleaned up.
 		  // 5 seconds
 		  for (uint i = 0; i < 50; ++i)

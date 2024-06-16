@@ -10,7 +10,7 @@ static constexpr const usize WideArraySize = 5'000'000ull;
 
 namespace
 {
-	vector2F ClampPosition(const vector2F & __restrict position, float radius)
+	static vector2F ClampPosition(const vector2F& __restrict position, float radius)
 	{
 		vector2F out = position;
 
@@ -23,12 +23,12 @@ namespace
 	}
 }
 
-Controller::Controller(Simulation &simulation) :
+Controller::Controller(Simulation& simulation) :
 	m_Simulation(simulation),
 	m_ThreadPool("Physics", [this](usize threadID) {pool_update(threadID); }, false),
 	m_ThreadPool2("Physics 2", [this](usize threadID) {pool_update2(threadID); }, false)
 {
-	// Calculate the grid width/height. Shoudl be the same.
+	// Calculate the grid width/height. Should be the same.
 	m_GridElementsEdge = uint32(((double(options::WorldRadius) * 2.0) / double(options::MedianCellSize)) + 0.5);
 	m_GridElementSize = float((double(options::WorldRadius) * 2.0) / double(m_GridElementsEdge));
 	m_GridElementSizeHalf = m_GridElementSize * 0.5f;
@@ -36,15 +36,10 @@ Controller::Controller(Simulation &simulation) :
 	m_GridElements.resize((m_GridElementsEdge * m_GridElementsEdge) + 1); // we stick new elements in the last one.
 }
 
-Controller::~Controller()
-{
-}
+Controller::~Controller() = default;
 
 vector2F Controller::GetGridOffset(uint gridElement) const __restrict
 {
-	//uint32 x = gridElement % m_GridElementsEdge;
-	//uint32 y = gridElement / m_GridElementsEdge;
-
 	uint32 x, y;
 	xtd::morton2d<uint>(gridElement).get_offsets(x, y);
 
@@ -69,9 +64,7 @@ vector2F Controller::GetGridXRange(uint gridElement) const __restrict
 
 vector2F Controller::GetGridXRangeFromX(uint gridX) const __restrict
 {
-	uint32 x = gridX;
-
-	float xPos = (float(x) * m_GridElementSize) - options::WorldRadius;
+	float xPos = (float(gridX) * m_GridElementSize) - options::WorldRadius;
 
 	return{
 	   xPos,
@@ -81,8 +74,6 @@ vector2F Controller::GetGridXRangeFromX(uint gridX) const __restrict
 
 vector2F Controller::GetGridYRangeFromY(uint gridY) const __restrict
 {
-	uint32 y = gridY;
-
 	float yPos = (float(gridY) * m_GridElementSize) - options::WorldRadius;
 
 	return{
@@ -91,7 +82,7 @@ vector2F Controller::GetGridYRangeFromY(uint gridY) const __restrict
 	};
 }
 
-uint32 Controller::GetInstanceOffset(const instance_t & __restrict instance) const __restrict
+uint32 Controller::GetInstanceOffset(const instance_t& __restrict instance) const __restrict
 {
 	uint32 xcoord = uint32((instance.m_Position.x + options::WorldRadius) * m_InvGridElementSize);
 	uint32 ycoord = uint32((instance.m_Position.y + options::WorldRadius) * m_InvGridElementSize);
@@ -104,7 +95,7 @@ uint32 Controller::GetInstanceOffset(const instance_t & __restrict instance) con
 }
 
 // Error - this is returning an out of range index.
-uint32 Controller::GetPositionOffset(const vector2F & __restrict position) const __restrict
+uint32 Controller::GetPositionOffset(const vector2F& __restrict position) const __restrict
 {
 	uint32 xcoord = uint32((position.x + options::WorldRadius) * m_InvGridElementSize);
 	uint32 ycoord = uint32((position.y + options::WorldRadius) * m_InvGridElementSize);
@@ -125,13 +116,13 @@ uint32 Controller::GetInstanceOffset(uint x, uint y) const __restrict
 	//return coord;
 }
 
-void Controller::removedInstance(instance_t * __restrict instance) __restrict
+void Controller::removedInstance(instance_t* __restrict instance) __restrict
 {
 	m_GridElements[instance->m_GridArrayIndex].removeElement(instance); // It was in another sub-array.
 	instance->m_GridArrayIndex = (m_GridElements.size() - 1);
 }
 
-void Controller::insertedInstance(instance_t * __restrict instance) __restrict
+void Controller::insertedInstance(instance_t* __restrict instance) __restrict
 {
 	instance->m_GridArrayIndex = m_GridElements.size() - 1;
 	m_GridElements.back().addElement(instance);
@@ -153,7 +144,7 @@ void Controller::pool_update(usize) __restrict
 		uint finalIdx = std::min(uIdx + readAhead, numInstances);
 		for (; uIdx < finalIdx; ++uIdx)
 		{
-			Instance & __restrict instance = m_Instances[uIdx];
+			Instance& __restrict instance = m_Instances[uIdx];
 
 			// If the instance is invalid, just skip it.
 			// This happens when an instance is removed from the global list, but no new instance has populated it.
@@ -241,7 +232,7 @@ void Controller::pool_update2(usize) __restrict
 		uint finalIdx = std::min(uIdx + readAhead, numInstances);
 		for (; uIdx < finalIdx; ++uIdx)
 		{
-			Instance & __restrict instance = m_Instances[uIdx];
+			Instance& __restrict instance = m_Instances[uIdx];
 			if (!instance.m_Valid)
 			{
 				continue;
@@ -267,15 +258,15 @@ void Controller::pool_update2(usize) __restrict
 			const vector2F yRange = { thisPosition.y - instance.m_Radius, thisPosition.y + instance.m_Radius };
 
 			// AABB test function.
-			const auto testRange = [](const vector2F & __restrict range1, const vector2F & __restrict range2) -> uint
+			const auto testRange = [](const vector2F& __restrict range1, const vector2F& __restrict range2) -> uint
 			{
 				return (uint(range1.x <= range2.y) & uint(range2.x <= range1.y));
 			};
 
-			const auto &gridElements = m_GridElements[instance.m_GridArrayIndex];
+			const auto& gridElements = m_GridElements[instance.m_GridArrayIndex];
 
 			{
-				const auto testCommand = [&](const instance_t *testInstance)
+				const auto testCommand = [&](const instance_t* testInstance)
 				{
 					// AABB is actually slower most of the time.
 					//const vector2F testXRange = { testInstance->m_Position.x - testInstance->m_Radius, testInstance->m_Position.x + testInstance->m_Radius };
@@ -303,7 +294,7 @@ void Controller::pool_update2(usize) __restrict
 						const auto getRandomDirection = [&instance]() -> vector2F {
 							float radians = instance.m_Cell->getRandom().uniform<float>(0.0f, 2.0f * xtd::pi<float>);
 							return { cos(radians), sin(radians) };
-						};
+							};
 
 						const float directionScale = overlapScale * 10.0f * instance.m_Radius;
 
@@ -323,8 +314,9 @@ void Controller::pool_update2(usize) __restrict
 						velocity += directionAway;// *massRatio;
 						xassert(velocity == velocity, "nan");
 
-						if (overlapScale > 0.5f)
+						if (overlapScale > 0.5f) {
 							++touchedThisFrame;
+						}
 
 						const auto testInstanceVelocity = testInstance->m_ShadowVelocity;
 						const float testInstanceSpeedSquared = testInstanceVelocity.length_sq();
@@ -422,7 +414,7 @@ void Controller::pool_update2(usize) __restrict
 
 				for (uint elem = 0; elem < instance.m_GridIndex; ++elem)
 				{
-					const auto * __restrict testInstance = gridElements.m_Elements[elem];
+					const auto* __restrict testInstance = gridElements.m_Elements[elem];
 
 					testCommand(testInstance);
 				}
@@ -430,7 +422,7 @@ void Controller::pool_update2(usize) __restrict
 				const uint sz = gridElements.m_ElementCount;
 				for (uint elem = instance.m_GridIndex + 1; elem < sz; ++elem)
 				{
-					const auto * __restrict testInstance = gridElements.m_Elements[elem];
+					const auto* __restrict testInstance = gridElements.m_Elements[elem];
 
 					testCommand(testInstance);
 				}
@@ -439,13 +431,12 @@ void Controller::pool_update2(usize) __restrict
 				//uint32 x = instance.m_GridArrayIndex % m_GridElementsEdge;
 				//uint32 y = instance.m_GridArrayIndex / m_GridElementsEdge;
 
-				uint32 x;
-				uint32 y;
+				uint32 x, y;
 				xtd::morton2d<uint>(instance.m_GridArrayIndex).get_offsets(x, y);
 
 				// Build a set of grid arrays to scan.
 				uint GridSize = 0; // two by default.
-				xtd::array<const InstanceSubArray<GridArraySize> *, 8> GridArray;
+				xtd::array<const InstanceSubArray<GridArraySize>*, 8> GridArray;
 
 				uint ym1 = testRange(yRange, GetGridYRangeFromY(y - 1));
 				uint yp1 = testRange(yRange, GetGridYRangeFromY(y + 1));
@@ -491,12 +482,12 @@ void Controller::pool_update2(usize) __restrict
 
 				for (uint i = 0; i < GridSize; ++i)
 				{
-					const auto * __restrict element = GridArray[i];
+					const auto* __restrict element = GridArray[i];
 
 					const uint sz = element->m_ElementCount;
 					for (uint elem = 0; elem < sz; ++elem)
 					{
-						const auto * __restrict testInstance = element->m_Elements[elem];
+						const auto* __restrict testInstance = element->m_Elements[elem];
 
 						testCommand(testInstance);
 					}
@@ -537,7 +528,7 @@ void Controller::update()
 	*/
 }
 
-Cell *Controller::findCell(const vector2F & __restrict position, float radius, const Cell * __restrict filter) const __restrict
+Cell* Controller::findCell(const vector2F& __restrict position, float radius, const Cell* __restrict filter) const __restrict
 {
 	const vector2F thisPosition = ClampPosition(position, radius);
 	float testRadius = radius;
@@ -547,112 +538,109 @@ Cell *Controller::findCell(const vector2F & __restrict position, float radius, c
 
 	uint32 GridIndex = GetPositionOffset(thisPosition);
 
-	const auto testRange = [](const vector2F & __restrict range1, const vector2F & __restrict range2) -> uint
+	const auto testRange = [](const vector2F& __restrict range1, const vector2F& __restrict range2) -> uint
 	{
 		return (uint(range1.x <= range2.y) & uint(range2.x <= range1.y));
 	};
 
-	const auto & __restrict gridElements = m_GridElements[GridIndex];
+	const auto& __restrict gridElements = m_GridElements[GridIndex];
 
+	const auto testCommand = [&](const instance_t* testInstanceNR) -> bool
 	{
-		const auto testCommand = [&](const instance_t *testInstanceNR) -> bool
+		// AABB is actually slower most of the time.
+		//const vector2F testXRange = { testInstance->m_Position.x - testInstance->m_Radius, testInstance->m_Position.x + testInstance->m_Radius };
+		//const vector2F testYRange = { testInstance->m_Position.y - testInstance->m_Radius, testInstance->m_Position.y + testInstance->m_Radius };
+		//if (!(testRange(xRange, testXRange) & testRange(yRange, testYRange)))
+		//{
+		//   return;
+		//}
+
+		if (testInstanceNR->m_Cell == filter)
 		{
-			// AABB is actually slower most of the time.
-			//const vector2F testXRange = { testInstance->m_Position.x - testInstance->m_Radius, testInstance->m_Position.x + testInstance->m_Radius };
-			//const vector2F testYRange = { testInstance->m_Position.y - testInstance->m_Radius, testInstance->m_Position.y + testInstance->m_Radius };
-			//if (!(testRange(xRange, testXRange) & testRange(yRange, testYRange)))
-			//{
-			//   return;
-			//}
+			return false;
+		}
 
-			if (testInstanceNR->m_Cell == filter)
-			{
-				return false;
-			}
+		const instance_t* __restrict testInstance = testInstanceNR;
 
-      const instance_t * __restrict testInstance = testInstanceNR;
+		vector2F subDistance = (thisPosition - testInstance->m_ShadowPosition);
+		float distSq = subDistance.dot(subDistance);
+		float radiusSq = (testRadius + testInstance->m_ShadowRadius);
+		radiusSq *= radiusSq;
+		return (distSq < radiusSq);
+	};
 
-			vector2F subDistance = (thisPosition - testInstance->m_ShadowPosition);
-			float distSq = subDistance.dot(subDistance);
-			float radiusSq = (testRadius + testInstance->m_ShadowRadius);
-			radiusSq *= radiusSq;
-			return (distSq < radiusSq);
-		};
+	uint sz = gridElements.m_ElementCount;
+	for (uint elem = 0; elem < sz; ++elem)
+	{
+		const auto* __restrict testInstance = gridElements.m_Elements[elem];
 
-		uint sz = gridElements.m_ElementCount;
+		if (testCommand(testInstance))
+		{
+			return testInstance->m_Cell;
+		}
+	}
+
+	// Extract X and Y.
+	//uint32 x = GridIndex % m_GridElementsEdge;
+	//uint32 y = GridIndex / m_GridElementsEdge;
+
+	uint32 x, y;
+	xtd::morton2d<uint>(GridIndex).get_offsets(x, y);
+
+	// Build a set of grid arrays to scan.
+	uint GridSize = 0; // two by default.
+	xtd::array<const InstanceSubArray<GridArraySize>*, 8> GridArray;
+
+	uint ym1 = testRange(yRange, GetGridYRangeFromY(y - 1));
+	uint yp1 = testRange(yRange, GetGridYRangeFromY(y + 1));
+
+	if (x != 0 && testRange(xRange, GetGridXRangeFromX(x - 1)))
+	{
+		// We can insert elements behind.
+		GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x - 1, y)];
+		if ((y != 0) & ym1)
+		{
+			GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x - 1, y - 1)];
+		}
+		if ((y != m_GridElementsEdge - 1) & yp1)
+		{
+			GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x - 1, y + 1)];
+		}
+	}
+	if (x != m_GridElementsEdge - 1 && testRange(xRange, GetGridXRangeFromX(x + 1)))
+	{
+		// We can insert elements ahead.
+		GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x + 1, y)];
+		if ((y != 0) & ym1)
+		{
+			GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x + 1, y - 1)];
+		}
+		if ((y != m_GridElementsEdge - 1) & yp1)
+		{
+			GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x + 1, y + 1)];
+		}
+	}
+	if ((y != 0) & ym1)
+	{
+		GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x, y - 1)];
+	}
+	if ((y != m_GridElementsEdge - 1) & yp1)
+	{
+		GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x, y + 1)];
+	}
+
+	for (uint i = 0; i < GridSize; ++i)
+	{
+		const auto* __restrict element = GridArray[i];
+
+		uint sz = element->m_ElementCount;
 		for (uint elem = 0; elem < sz; ++elem)
 		{
-			const auto * __restrict testInstance = gridElements.m_Elements[elem];
+			const auto* __restrict testInstance = element->m_Elements[elem];
 
 			if (testCommand(testInstance))
 			{
 				return testInstance->m_Cell;
-			}
-		}
-
-		// Extract X and Y.
-		//uint32 x = GridIndex % m_GridElementsEdge;
-		//uint32 y = GridIndex / m_GridElementsEdge;
-
-		uint32 x;
-		uint32 y;
-		xtd::morton2d<uint>(GridIndex).get_offsets(x, y);
-
-		// Build a set of grid arrays to scan.
-		uint GridSize = 0; // two by default.
-		xtd::array<const InstanceSubArray<GridArraySize> *, 8> GridArray;
-
-		uint ym1 = testRange(yRange, GetGridYRangeFromY(y - 1));
-		uint yp1 = testRange(yRange, GetGridYRangeFromY(y + 1));
-
-		if (x != 0 && testRange(xRange, GetGridXRangeFromX(x - 1)))
-		{
-			// We can insert elements behind.
-			GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x - 1, y)];
-			if ((y != 0) & ym1)
-			{
-				GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x - 1, y - 1)];
-			}
-			if ((y != m_GridElementsEdge - 1) & yp1)
-			{
-				GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x - 1, y + 1)];
-			}
-		}
-		if (x != m_GridElementsEdge - 1 && testRange(xRange, GetGridXRangeFromX(x + 1)))
-		{
-			// We can insert elements ahead.
-			GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x + 1, y)];
-			if ((y != 0) & ym1)
-			{
-				GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x + 1, y - 1)];
-			}
-			if ((y != m_GridElementsEdge - 1) & yp1)
-			{
-				GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x + 1, y + 1)];
-			}
-		}
-		if ((y != 0) & ym1)
-		{
-			GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x, y - 1)];
-		}
-		if ((y != m_GridElementsEdge - 1) & yp1)
-		{
-			GridArray[GridSize++] = &m_GridElements[GetInstanceOffset(x, y + 1)];
-		}
-
-		for (uint i = 0; i < GridSize; ++i)
-		{
-			const auto * __restrict element = GridArray[i];
-
-			uint sz = element->m_ElementCount;
-			for (uint elem = 0; elem < sz; ++elem)
-			{
-				const auto * __restrict testInstance = element->m_Elements[elem];
-
-				if (testCommand(testInstance))
-				{
-					return testInstance->m_Cell;
-				}
 			}
 		}
 	}

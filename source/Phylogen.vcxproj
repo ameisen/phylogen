@@ -357,8 +357,11 @@
       <EnableModules>false</EnableModules>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointExceptions>false</FloatingPointExceptions>
-      <AdditionalOptions>/permissive- %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -408,6 +411,9 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <ConformanceMode>true</ConformanceMode>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -420,6 +426,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <HeapReserveSize>536870912</HeapReserveSize>
       <HeapCommitSize>536870912</HeapCommitSize>
+      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)..\vs_common\manifest.xml</AdditionalManifestFiles>
@@ -458,7 +465,10 @@
       <EnableModules>false</EnableModules>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointExceptions>false</FloatingPointExceptions>
-      <AdditionalOptions>/permissive- %(AdditionalOptions)</AdditionalOptions>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -468,6 +478,7 @@
       <AdditionalDependencies>libxtd.lib;dxgi.lib;Dxva2.lib;D3D11.lib;dxguid.lib;noisepp.lib;Shlwapi.lib;Pdh.lib;PowrProf.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <LargeAddressAware>true</LargeAddressAware>
+      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)..\vs_common\manifest.xml</AdditionalManifestFiles>

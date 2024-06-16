@@ -19,7 +19,7 @@ namespace phylo
 			public:
 				Register() = default;
 
-				Register(const Register &val) : m_Value(val.m_Value) {}
+				Register(const Register& val) = default;
 
 				Register(uint16 val) : m_Value(val) {}
 
@@ -39,11 +39,8 @@ namespace phylo
 					m_Value = uint16(val * 65535.5f);
 					return *this;
 				}
-				Register &operator = (Register val) __restrict
-				{
-					m_Value = val.m_Value;
-					return *this;
-				}
+				Register& operator = (const Register&) = default;
+
 				operator const uint16() const __restrict
 				{
 					return m_Value;
@@ -241,7 +238,7 @@ namespace phylo
 				m_ProgramCounter %= m_ByteCode.size();
 				generate_bytecode_hash();
 			}
-			void tick(Controller *controller, typename CounterType &counter);
+			void tick(Controller *controller, CounterType &counter);
 
 			void mutate();
 

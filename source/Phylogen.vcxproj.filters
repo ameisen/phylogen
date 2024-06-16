@@ -202,12 +202,8 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\..\..\Libraries\libxtd\build\vs2017\natvis\xtd.natvis">
-      <Filter>NATVIS</Filter>
-    </Natvis>
-    <Natvis Include="..\..\..\Libraries\libxtd\build\vs2017\natvis\xtdgraphics.natvis">
-      <Filter>NATVIS</Filter>
-    </Natvis>
+    <Natvis Include="..\..\..\Libraries\libxtd\natvis\xtd.natvis" />
+    <Natvis Include="..\..\..\Libraries\libxtd\natvis\xtdgraphics.natvis" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\build\vs_common\resource.rc">

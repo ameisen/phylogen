@@ -3,6 +3,7 @@
 #pragma once
 
 #include <xtd/xtd>
+#include <bit>
 
 using namespace xtd;
 using namespace xtd::math;
@@ -22,8 +23,10 @@ namespace phylo
       uint64            CellID;
       function<void()>  Function;
 
-	  Task(uint64 _CellID, function<void()> _Function) :
-		  CellID(_CellID), Function(_Function) {}
+	  Task(uint64 cell_id, function<void()>&& functor) :
+		  CellID(cell_id),
+         Function(std::move(functor))
+      {}
 
 	  Task(const Task &) = default;
 	  Task(Task &&) = default;
@@ -31,9 +34,9 @@ namespace phylo
 	  Task & operator = (const Task &) = default;
 	  Task & operator = (Task &&) = default;
 
-      bool operator < (const Task &task) const 
+      auto operator <=> (const Task &task) const 
       {
-         return CellID < task.CellID;
+         return CellID <=> task.CellID;
       }
 
       operator uint64 () const 
@@ -54,7 +57,7 @@ namespace phylo
 
 class Stream
 {
-   static const usize cuSizeExpandAlign = 0x1000ULL;
+   static constexpr const usize cuSizeExpandAlign = 0x1000ULL;
 
    bool reading = false;
 
@@ -72,15 +75,14 @@ class Stream
    }
 
 public:
-   Stream() : m_uCurrentOffset(0ULL), m_StreamView(nullptr)
+   Stream() : m_StreamView(nullptr), m_uCurrentOffset(0ULL)
    {
-      m_StreamData.reserve(128 * 1024 * 1024);
+      m_StreamData.reserve(128ULL * 1024ULL * 1024ULL);
    }
-   Stream(array_view<uint8> &rData) : m_uCurrentOffset(0ULL), m_StreamView(rData), reading(true)
-   {
+   Stream(const array_view<uint8> &rData) : reading(true), m_StreamView(rData), m_uCurrentOffset(0ULL) {
    }
    Stream(Stream &&stream) = default;
-   ~Stream() {}
+   ~Stream() = default;
 
    void truncate() 
    {
@@ -90,11 +92,12 @@ public:
    void reset() 
    {
       m_uCurrentOffset = 0ULL;
-      if (!reading)
+      if (!reading) {
          m_StreamData.resize(cuSizeExpandAlign);
+      }
    }
 
-   const array_view<uint8> getRawData() const 
+   array_view<uint8> getRawData() const 
    {
       if (reading)
       {
@@ -108,50 +111,70 @@ public:
 
    void writeString(const xtd::string &rString) 
    {
-      uint16 uSize = uint16(rString.size());
+      const uint16 uSize = uint16(rString.size());
       write(uSize);
       writeRaw(rString.data(), rString.size());
    }
 
    void writeRaw(const void *pData, usize uLength) 
    {
-      size_t uSizeNeeded = m_uCurrentOffset + uLength;
+      const size_t uSizeNeeded = m_uCurrentOffset + uLength;
       expandTo(uSizeNeeded);
 
-      memcpy(m_StreamData.data() + m_uCurrentOffset, pData, uLength);
+      std::memcpy(m_StreamData.data() + m_uCurrentOffset, pData, uLength);
       m_uCurrentOffset += uLength;
    }
 
    template <typename T>
    void write(const T &rVal) 
    {
-      usize uSizeNeeded = m_uCurrentOffset + sizeof(T);
+      const usize uSizeNeeded = m_uCurrentOffset + sizeof(T);
       expandTo(uSizeNeeded);
 
-      memcpy(m_StreamData.data() + m_uCurrentOffset, &rVal, sizeof(T));
+      std::memcpy(m_StreamData.data() + m_uCurrentOffset, &rVal, sizeof(T));
       m_uCurrentOffset += sizeof(T);
    }
 
-   xtd::string readString() 
+   template <typename T>
+   void write(const std::atomic<T>& rVal)
+   {
+      const usize uSizeNeeded = m_uCurrentOffset + sizeof(T);
+      expandTo(uSizeNeeded);
+
+      T temp = rVal.load();
+      std::memcpy(m_StreamData.data() + m_uCurrentOffset, &temp, sizeof(T));
+      m_uCurrentOffset += sizeof(T);
+   }
+
+   xtd::string readString()
    {
       uint16 uSize;
       read(uSize);
 
       array<char> ret(uSize + 1, 0);
-      readRaw((void *)ret.data(), uSize);
-      return string(ret.data());
+      readRaw(ret.data(), uSize);
+      return { ret.data() };
    }
 
    void readRaw(void *pData, usize uLength) 
    {
-      memcpy(pData, m_StreamView.data() + m_uCurrentOffset, uLength);
+      std::memcpy(pData, m_StreamView.data() + m_uCurrentOffset, uLength);
       m_uCurrentOffset += uLength;
    }
 
    template <typename T>
    void read(T &rVal) 
    {
-      memcpy(&rVal, m_StreamView.data() + m_uCurrentOffset, sizeof(T));
+      std::memcpy(&rVal, m_StreamView.data() + m_uCurrentOffset, sizeof(T));
+      m_uCurrentOffset += sizeof(T);
+   }
+
+   template <typename T>
+   void read(std::atomic<T>& rVal)
+   {
+      T temp;
+      std::memcpy(&temp, m_StreamView.data() + m_uCurrentOffset, sizeof(T));
+      rVal.store(temp);
       m_uCurrentOffset += sizeof(T);
    }
 };

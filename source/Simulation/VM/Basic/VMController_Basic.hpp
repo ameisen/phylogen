@@ -13,7 +13,7 @@ namespace phylo
 		{
 		protected:
 			friend struct Instance;
-			typedef VM::Instance instance_t;
+			using instance_t = VM::Instance;
 			using CounterType = array<atomic<uint32>, VM::NumOperations + 1>;
 		private:
 
@@ -36,8 +36,8 @@ namespace phylo
 
 		public:
 			ControllerImpl() = delete;
-			ControllerImpl(Simulation &simulation);
-			~ControllerImpl();
+			explicit ControllerImpl(Simulation &simulation);
+			~ControllerImpl() override;
 
 			void update() ;
 			void post_update() ;
